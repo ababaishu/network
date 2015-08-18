@@ -1,0 +1,269 @@
+
+#include<stdio.h>
+#include<sys/stat.h>
+#include<sys/types.h>
+#include<sys/socket.h>
+#include<arpa/inet.h>
+#include<netinet/in.h>
+main()
+{
+    struct sockaddr_in server,client;
+    int s,n;
+    char b1[100],b2[100];
+    s=socket(AF_INET,SOCK_DGRAM,0);
+    server.sin_family=AF_INET;
+    server.sin_port=3000;
+    server.sin_addr.s_addr=inet_addr("127.0.0.1");
+    n=sizeof(server);
+    printf("\nEnter canonical address: ");
+    scanf("%s",b2);
+    sendto(s,b2,sizeof(b2),0,(struct sockaddr *)&server,n);
+    recvfrom(s,b1,sizeof(b1), 0,NULL,NULL);
+    printf("%s \n",b1);
+}
+...........................................................................................................................
+#include<stdio.h>
+#include<sys/stat.h>
+#include<sys/types.h>
+#include<sys/socket.h>
+#include<netinet/in.h>
+#include<arpa/inet.h>
+#include<string.h>
+main()
+{
+    FILE *fp;
+    struct sockaddr_in server,client;
+    int s,n;
+    char b1[100],b2[100],a[100];
+    s=socket(AF_INET,SOCK_DGRAM,0);
+    server.sin_family=AF_INET;
+    server.sin_port=3000;
+    server.sin_addr.s_addr=inet_addr("127.0.0.1");
+    bind(s,(struct sockaddr *)&server,sizeof(server));
+    n=sizeof(client);
+    while(1)
+    {
+        strcpy(b2,"");
+        fp=fopen("dns.txt","r");
+        recvfrom(s,b1,sizeof b1, 0,(struct sockaddr *)&client,&n);
+        while(!feof(fp))
+       {
+           fscanf(fp,"%s",a);
+           if(strcmp(a,b1)==0)
+          {
+                fscanf(fp,"%s",b2);
+                break;
+          }
+      }
+      if(strcmp(b2,"")==0)
+     {
+           strcpy(b2,"Not found...");
+      }
+     fclose(fp);
+     sendto(s,b2,sizeof b2,0,(struct sockaddr *)&client,n); 
+    }
+}
+.................................................................................
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <stdio.h>
+#include<string.h>
+ 
+int main(int argc,char **argv)
+{
+    int sockfd,n;
+    char sendline[100];
+    char recvline[100];
+    struct sockaddr_in servaddr;
+ 
+    sockfd=socket(AF_INET,SOCK_STREAM,0);
+    bzero(&servaddr,sizeof servaddr);
+ 
+    servaddr.sin_family=AF_INET;
+    servaddr.sin_port=htons(22000);
+ 
+    inet_pton(AF_INET,"192.168.117.117",&(servaddr.sin_addr));
+ 
+    connect(sockfd,(struct sockaddr *)&servaddr,sizeof(servaddr));
+ 
+    while(1)
+    {
+        bzero( sendline, 100);
+        bzero( recvline, 100);
+        fgets(sendline,100,stdin); /*stdin = 0 , for standard input */
+ 
+        write(sockfd,sendline,strlen(sendline)+1);
+        read(sockfd,recvline,100);
+        printf("%s",recvline);
+    }
+ 
+}
+...........................................................................................
+/*Required Headers*/
+ 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <stdio.h>
+#include<string.h>
+ 
+int main()
+{
+ 
+    char str[100];
+    int listen_fd, comm_fd;
+ 
+    struct sockaddr_in servaddr;
+ 
+    listen_fd = socket(AF_INET, SOCK_STREAM, 0);
+ 
+    bzero( &servaddr, sizeof(servaddr));
+ 
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = htons(INADDR_ANY);
+    servaddr.sin_port = htons(22000);
+ 
+    bind(listen_fd, (struct sockaddr *) &servaddr, sizeof(servaddr));
+ 
+    listen(listen_fd, 10);
+ 
+    comm_fd = accept(listen_fd, (struct sockaddr*) NULL, NULL);
+ 
+    while(1)
+    {
+ 
+        bzero( str, 100);
+ 
+        read(comm_fd,str,100);
+ 
+        printf("Echo - %s",str);
+ 
+        write(comm_fd, str, strlen(str)+1);
+ 
+    }
+}
+.............................................................
+#include<stdio.h>
+#include<stdlib.h>
+#include<sys/socket.h>
+#include<netinet/in.h>
+int main()
+{
+FILE *fp;
+int csd,n,ser,s,cli,cport,newsd;
+char name[100],rcvmsg[100],rcvg[100],fname[100];
+struct sockaddr_in servaddr;
+printf("Enter the port");
+scanf("%d",&cport);
+csd=socket(AF_INET,SOCK_STREAM,0);
+if(csd<0)
+{
+printf("Error....\n");
+exit(0);
+}
+else
+printf("Socket is created\n");
+servaddr.sin_family=AF_INET;
+servaddr.sin_addr.s_addr=htonl(INADDR_ANY);
+servaddr.sin_port=htons(cport);
+if(connect(csd,(struct sockaddr *)&servaddr,sizeof(servaddr))<0)
+printf("Error in connection\n");
+else
+printf("connected\n");
+printf("Enter the existing file name\t");
+scanf("%s",name);
+printf("Enter the new file name\t");
+scanf("%s",fname);
+fp=fopen(fname,"w");
+send(csd,name,sizeof(name),0);
+while(1)
+{
+s=recv(csd,rcvg,100,0);
+rcvg[s]='\0';
+if(strcmp(rcvg,"error")==0)
+printf("File is not available\n");
+if(strcmp(rcvg,"completed")==0)
+{
+printf("sucessfully file is transferred\n");
+fclose(fp);
+close(csd);
+break;
+}
+else
+fputs(rcvg,stdout);
+fprintf(fp,"%s",rcvg);
+}
+}
+
+
+
+
+
+
+
+
+..................................
+#include<stdio.h>
+#include<sys/types.h>
+#include<netinet/in.h>
+#include<string.h>
+#include<stdlib.h>
+int main()
+{
+FILE *fp;
+int sd,newsd,ser,n,a,cli,pid,bd,port,clilen;
+char name[100],fileread[100],fname[100],ch,file[100],rcv[100];
+struct sockaddr_in servaddr,cliaddr;
+printf("Enter the port address\n");
+scanf("%d",&port);
+sd=socket(AF_INET,SOCK_STREAM,0);
+if(sd<0)
+printf("Cant create\n");
+else
+printf("Socket is created\n");
+servaddr.sin_family=AF_INET;
+servaddr.sin_addr.s_addr=htonl(INADDR_ANY);
+servaddr.sin_port=htons(port);
+a=sizeof(servaddr);
+bd=bind(sd,(struct sockaddr *)&servaddr,a);
+if(bd<0)
+printf("Cant bind\n");
+else
+printf("Binded\n");
+listen(sd,5);
+clilen=sizeof(cliaddr);
+newsd=accept(sd,(struct sockaddr *)&cliaddr,&clilen);
+if(newsd<0)
+{
+printf("Cant accept\n");
+}
+else
+printf("Accepted\n");
+n=recv(newsd,rcv,100,0);
+rcv[n]='\0';
+fp=fopen(rcv,"r");
+if(fp==NULL)
+{
+send(newsd,"error",5,0);
+close(newsd);
+}
+else
+{
+while(fgets(fileread,sizeof(fileread),fp))
+{
+if(send(newsd,fileread,sizeof(fileread),0)<0)
+{
+printf("Cant send\n");
+}
+sleep(1);
+}
+if(!fgets(fileread,sizeof(fileread),fp))
+{
+send(newsd,"completed",999999999,0);
+}
+return(0);
+}
+}
+
+.........................................
